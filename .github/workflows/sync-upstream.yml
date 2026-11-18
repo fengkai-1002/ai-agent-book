@@ -1,0 +1,31 @@
+name: Upstream Sync
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '0 0 * * *'        # 每天 UTC 0 点
+  workflow_dispatch:           # 手动按钮触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync upstream
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+        with:
+          upstream_sync_repo: bojieli/ai-agent-book
+          upstream_sync_branch: main
+          target_sync_branch: main
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_sync_command: pull --ff-only   # 只快进，不自己写合并提交
+
+      - name: Check
+        if: steps.sync.outputs.has-new-commits == 'true'
+        run: echo "已同步上游新提交"
